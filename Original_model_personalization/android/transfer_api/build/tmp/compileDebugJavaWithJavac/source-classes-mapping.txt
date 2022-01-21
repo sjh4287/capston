@@ -1,0 +1,2 @@
+org/tensorflow/lite/examples/transfer/api/BuildConfig.java
+ org.tensorflow.lite.examples.transfer.api.BuildConfig

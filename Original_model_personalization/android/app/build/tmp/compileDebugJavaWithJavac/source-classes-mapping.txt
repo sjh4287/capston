@@ -1,0 +1,37 @@
+org/tensorflow/lite/examples/transfer/CameraFragmentViewModel.java
+ org.tensorflow.lite.examples.transfer.CameraFragmentViewModel
+ org.tensorflow.lite.examples.transfer.CameraFragmentViewModel$TrainingState
+org/tensorflow/lite/examples/transfer/LoggingBenchmark.java
+ org.tensorflow.lite.examples.transfer.LoggingBenchmark
+org/tensorflow/lite/examples/transfer/HelpDialog.java
+ org.tensorflow.lite.examples.transfer.HelpDialog
+org/tensorflow/lite/examples/transfer/CameraFragment.java
+ org.tensorflow.lite.examples.transfer.CameraFragment
+ org.tensorflow.lite.examples.transfer.CameraFragment$1
+ org.tensorflow.lite.examples.transfer.CameraFragment$2
+org/tensorflow/lite/examples/transfer/databinding/CameraFragmentBinding.java
+ org.tensorflow.lite.examples.transfer.databinding.CameraFragmentBinding
+org/tensorflow/lite/examples/transfer/LiteMultipleSignatureModel.java
+ org.tensorflow.lite.examples.transfer.LiteMultipleSignatureModel
+org/tensorflow/lite/examples/transfer/MainActivity.java
+ org.tensorflow.lite.examples.transfer.MainActivity
+org/tensorflow/lite/examples/transfer/ModelLoader.java
+ org.tensorflow.lite.examples.transfer.ModelLoader
+org/tensorflow/lite/examples/transfer/DataBindingTriggerClass.java
+ org.tensorflow.lite.examples.transfer.DataBindingTriggerClass
+org/tensorflow/lite/examples/transfer/TransferLearningModel.java
+ org.tensorflow.lite.examples.transfer.TransferLearningModel
+ org.tensorflow.lite.examples.transfer.TransferLearningModel$1
+ org.tensorflow.lite.examples.transfer.TransferLearningModel$LossConsumer
+ org.tensorflow.lite.examples.transfer.TransferLearningModel$Prediction
+org/tensorflow/lite/examples/transfer/PermissionsFragment.java
+ org.tensorflow.lite.examples.transfer.PermissionsFragment
+ org.tensorflow.lite.examples.transfer.PermissionsFragment$PermissionsAcquiredListener
+org/tensorflow/lite/examples/transfer/ImageUtils.java
+ org.tensorflow.lite.examples.transfer.ImageUtils
+org/tensorflow/lite/examples/transfer/BuildConfig.java
+ org.tensorflow.lite.examples.transfer.BuildConfig
+org/tensorflow/lite/examples/transfer/TransferLearningModelWrapper.java
+ org.tensorflow.lite.examples.transfer.TransferLearningModelWrapper
+org/tensorflow/lite/examples/transfer/TrainingSample.java
+ org.tensorflow.lite.examples.transfer.TrainingSample

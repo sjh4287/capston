@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="Gradle: org.tensorflow:tensorflow-lite-select-tf-ops:0.0.0-nightly-SNAPSHOT@aar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/caches/transforms-3/bd514fb525ffaac788f32aec1eccb9cc/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/caches/transforms-3/bd514fb525ffaac788f32aec1eccb9cc/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/res" />
+      <root url="file://$USER_HOME$/caches/transforms-3/bd514fb525ffaac788f32aec1eccb9cc/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/AndroidManifest.xml" />
+      <root url="file://$USER_HOME$/caches/transforms-3/278ea9ee0da93dee784a831e6b6299ae/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/res" />
+      <root url="file://$USER_HOME$/caches/transforms-3/a772f2de90133fd93c26a36ec809d2c4/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/res" />
+      <root url="file://$USER_HOME$/caches/transforms-3/37927f8dc4ffc67c1c4654723e673ceb/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/res" />
+      <root url="file://$USER_HOME$/caches/transforms-3/5814c224be105436e59527dfc7b8f029/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/res" />
+      <root url="jar://$USER_HOME$/caches/transforms-3/35e0dc5c91ec41ab5e0c69ae4d368684/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/caches/transforms-3/35e0dc5c91ec41ab5e0c69ae4d368684/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/AndroidManifest.xml" />
+      <root url="file://$USER_HOME$/caches/transforms-3/35e0dc5c91ec41ab5e0c69ae4d368684/transformed/jetified-tensorflow-lite-select-tf-ops-0.0.0-nightly-SNAPSHOT/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
