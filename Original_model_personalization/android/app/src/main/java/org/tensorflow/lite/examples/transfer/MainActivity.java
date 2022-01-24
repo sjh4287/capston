@@ -17,14 +17,21 @@ package org.tensorflow.lite.examples.transfer;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.FragmentActivity;
+
+import java.io.File;
 
 /**
  * Main activity of the classifier demo app.
  */
+
 public class MainActivity extends FragmentActivity {
+
+    public static String dir = "";
 
   @RequiresApi(api = Build.VERSION_CODES.R)
   @Override
@@ -32,6 +39,8 @@ public class MainActivity extends FragmentActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
+    //비정상 종료 예외처리
+    Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     // If we're being restored from a previous state,
     // then we don't need to do anything and should return or else
     // we could end up with overlapping fragments.
@@ -39,6 +48,7 @@ public class MainActivity extends FragmentActivity {
       return;
     }
 
+    dir = getFilesDir().getAbsolutePath();
 
     PermissionsFragment firstFragment = new PermissionsFragment();
 
@@ -64,4 +74,27 @@ public class MainActivity extends FragmentActivity {
               }
             });
   }
+    //----------비정상 종료 예외처리----------
+    class ExceptionHandler implements Thread.UncaughtExceptionHandler {
+
+        @Override
+        public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+            e.printStackTrace();
+            File file = new File(dir+"/sample.txt");
+            file.delete();
+            Log.d("파일 삭제됨", "파일 삭제됨");
+            android.os.Process.killProcess(android.os.Process.myPid());
+            System.exit(10);
+        }
+    }
+    //---------------------------------
+    //----------종료시 파일 삭제----------
+    @Override
+    protected void onDestroy() {
+        File file = new File(dir+"/sample.txt");
+        file.delete();
+        Log.d("파일 삭제됨", "파일 삭제됨");
+      super.onDestroy();
+    }
+    //---------------------------------
 }

@@ -15,12 +15,22 @@ limitations under the License.
 
 package org.tensorflow.lite.examples.transfer;
 
+import android.content.Context;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,6 +48,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Stream;
 
 /** Represents a "partially" trainable model that is based on some other, base model. */
 public final class TransferLearningModel implements Closeable {
@@ -132,6 +143,7 @@ public final class TransferLearningModel implements Closeable {
    * @param image image RGB data.
    * @param className ground truth label for image.
    */
+  @RequiresApi(api = Build.VERSION_CODES.O)
   public Future<Void> addSample(float[][][] image, String className) {  //샘플 추가
     checkNotTerminating();  //종료되었는지 확인
 
@@ -149,7 +161,30 @@ public final class TransferLearningModel implements Closeable {
           trainingInferenceLock.lockInterruptibly();//interrupt 가능한 lock
           try {
             float[] bottleneck = model.loadBottleneck(image); //이미지의 bottleneck 추출 float[62720]
-            trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
+//            trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
+
+            //---------- 파일 쓰기----------
+            File file = new File(MainActivity.dir+"/sample.txt");
+            Log.d("위치: ", MainActivity.dir);
+            FileWriter fileWriter = new FileWriter(file, true);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+            bufferedWriter.append(Arrays.toString(oneHotEncodedClass.get(className))).append("/");
+            bufferedWriter.append(Arrays.toString(bottleneck));
+            bufferedWriter.newLine();
+            bufferedWriter.close();
+
+            //------------------------------
+
+            //----------파일읽기----------
+            for (int i = 0; i < 20; i++) {
+              Stream<String> stream = Files.lines(Paths.get(MainActivity.dir+"/sample.txt"));
+
+              String line = stream.skip(i).findFirst().get();
+              Log.d(i + "번라인", line);
+            }
+            //------------------------------
+          } catch (Exception e) {
+            e.printStackTrace();
           }
           finally {
             trainingInferenceLock.unlock();
@@ -285,10 +320,20 @@ public final class TransferLearningModel implements Closeable {
         new Iterator<List<TrainingSample>>() {
           private int nextIndex = 0;
 
+          @RequiresApi(api = Build.VERSION_CODES.O)
           @Override
           public boolean hasNext() {
+            //----파일 크기 리턴하는부분----
+            try {
+              long lineCount = Files.lines(Paths.get(MainActivity.dir+"/sample.txt")).count();
+              Log.d("fileLines: ", lineCount +" ");
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+            //--------------------------
             return nextIndex < trainingSamples.size();  //샘플이 남아 있으면 true
           }
+
 
           @Override
           public List<TrainingSample> next() {

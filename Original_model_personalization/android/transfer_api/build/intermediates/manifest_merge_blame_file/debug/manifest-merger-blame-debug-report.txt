@@ -4,8 +4,8 @@
 4
 5    <uses-sdk
 6        android:minSdkVersion="21"
-6-->/home/kch/Study/Studied_in_NOSLab/Original_model_personalization/android/transfer_api/src/main/AndroidManifest.xml
+6-->C:\Study\capston\Original_model_personalization\android\transfer_api\src\main\AndroidManifest.xml
 7        android:targetSdkVersion="30" />
-7-->/home/kch/Study/Studied_in_NOSLab/Original_model_personalization/android/transfer_api/src/main/AndroidManifest.xml
+7-->C:\Study\capston\Original_model_personalization\android\transfer_api\src\main\AndroidManifest.xml
 8
 9</manifest>

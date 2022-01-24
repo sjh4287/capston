@@ -15,6 +15,7 @@ org/tensorflow/lite/examples/transfer/LiteMultipleSignatureModel.java
  org.tensorflow.lite.examples.transfer.LiteMultipleSignatureModel
 org/tensorflow/lite/examples/transfer/MainActivity.java
  org.tensorflow.lite.examples.transfer.MainActivity
+ org.tensorflow.lite.examples.transfer.MainActivity$ExceptionHandler
 org/tensorflow/lite/examples/transfer/ModelLoader.java
  org.tensorflow.lite.examples.transfer.ModelLoader
 org/tensorflow/lite/examples/transfer/DataBindingTriggerClass.java
@@ -31,7 +32,7 @@ org/tensorflow/lite/examples/transfer/ImageUtils.java
  org.tensorflow.lite.examples.transfer.ImageUtils
 org/tensorflow/lite/examples/transfer/BuildConfig.java
  org.tensorflow.lite.examples.transfer.BuildConfig
-org/tensorflow/lite/examples/transfer/TransferLearningModelWrapper.java
- org.tensorflow.lite.examples.transfer.TransferLearningModelWrapper
 org/tensorflow/lite/examples/transfer/TrainingSample.java
  org.tensorflow.lite.examples.transfer.TrainingSample
+org/tensorflow/lite/examples/transfer/TransferLearningModelWrapper.java
+ org.tensorflow.lite.examples.transfer.TransferLearningModelWrapper
