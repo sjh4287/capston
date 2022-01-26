@@ -161,13 +161,12 @@ public final class TransferLearningModel implements Closeable {
           try {
             float[] bottleneck = model.loadBottleneck(image); //이미지의 bottleneck 추출 float[62720]
 
-            Calendar now = Calendar.getInstance();
-            int minute = now.get(Calendar.MINUTE);
-            int nowSec = now.get(Calendar.SECOND);
-            int nowMilSec = now.get(Calendar.MILLISECOND);
-            Log.d("작업 시작시간",  minute+"분 "+nowSec + "." +nowMilSec +"초");
-//            trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
-
+            //작업 시간 측정
+//            Calendar now = Calendar.getInstance();
+//            Log.d("작업 시작시간",  now.get(Calendar.MINUTE)+ "분 "
+//                    +now.get(Calendar.SECOND) + "."
+//                    +now.get(Calendar.MILLISECOND) + "초");
+//
 
             //---------- 파일 쓰기----------
             File file = new File(MainActivity.dir+"/sample.txt");
@@ -177,39 +176,40 @@ public final class TransferLearningModel implements Closeable {
             bufferedWriter.append(Arrays.toString(bottleneck));
             bufferedWriter.newLine();
             bufferedWriter.close();
-
+            SAMPLE_NUM++; //샘플 수 증가
             //------------------------------
+//
+//            //----------파일읽기----------
+//
+//            Stream<String> stream = Files.lines(Paths.get(MainActivity.dir+"/sample.txt"));
+//
+//            String line = stream.skip(SAMPLE_NUM).findFirst().get();  //n번 라인 출력
+//            //------------------------------
+//
+//            String[] temp = line.replace("[","")
+//                    .replace("]","")
+//                    .replace(" ", "")
+//                    .split("[,/]");
+//            float[] bottleneck_file = new float[62720];
+//            float[] oneHotEncodedClass_file = new float[4];
+//            for (int i = 0; i < 62724; i ++) {
+//              if (i < 4) {
+//                oneHotEncodedClass_file[i] = Float.parseFloat(temp[i]);
+//              } else {
+//                bottleneck_file[i-4] = Float.parseFloat(temp[i]);
+//              }
+//            }
+//            //파일을 쓰고 읽어서 float 배열로 변환 후 샘플 추가
+//            trainingSamples.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
 
-            //----------파일읽기----------
+            //샘플 추가
+//            trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
 
-              Stream<String> stream = Files.lines(Paths.get(MainActivity.dir+"/sample.txt"));
-
-              String line = stream.skip(SAMPLE_NUM).findFirst().get();  //n번 라인 출력
-              SAMPLE_NUM++; //i 개의 샘플
-            //------------------------------
-
-            String[] temp = line.replace("[","")
-                    .replace("]","")
-                    .replace(" ", "")
-                    .split("[,/]");
-            float[] bottleneck_file = new float[62720];
-            float[] oneHotEncodedClass_file = new float[4];
-            for (int i = 0; i < 62724; i ++) {
-              if (i < 4) {
-                oneHotEncodedClass_file[i] = Float.parseFloat(temp[i]);
-              } else {
-                bottleneck_file[i-4] = Float.parseFloat(temp[i]);
-              }
-            }
-            trainingSamples.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
-
-            //Log
-            Calendar now1 = Calendar.getInstance();
-            int minute1 = now1.get(Calendar.MINUTE);
-            int nowSec1 = now1.get(Calendar.SECOND);
-            int nowMilSec1 = now1.get(Calendar.MILLISECOND);
-
-            Log.d("작업 종료시간",  minute1+"분 "+nowSec1 + "." +nowMilSec1+"초");
+            //작업 시간 측정정
+//           Calendar now1 = Calendar.getInstance();
+//            Log.d("작업 종료시간",  now1.get(Calendar.MINUTE)+ "분 "
+//                    +now1.get(Calendar.SECOND) + "."
+//                    +now1.get(Calendar.MILLISECOND) +"초");
 
 
           } catch (Exception e) {
@@ -235,11 +235,11 @@ public final class TransferLearningModel implements Closeable {
     checkNotTerminating();  //종료되었는지 확인
     int trainBatchSize = getTrainBatchSize(); //훈련 배치 사이즈 가져오기
 
-    if (trainingSamples.size() < trainBatchSize) {  //샘플이 배치 사이즈보다 적으면
+    if (SAMPLE_NUM < trainBatchSize) {  //샘플이 배치 사이즈보다 적으면
       throw new RuntimeException(                   //== 샘플이 0개이고 배치 사이즈가 1인 경우
           String.format(
               "Too few samples to start training: need %d, got %d",
-              trainBatchSize, trainingSamples.size()));
+              trainBatchSize, SAMPLE_NUM));
     }
 
     trainingBatchBottlenecks = new float[trainBatchSize][numBottleneckFeatures()];  //배치 사이즈 * bottlenecks 크기
@@ -256,6 +256,7 @@ public final class TransferLearningModel implements Closeable {
 
               for (List<TrainingSample> batch : trainingBatches(trainBatchSize)) {  //for (A : B) 는 B의 값이 없을 때 까지 B에서 하나씩 꺼내서 A에게 넣는다는 의미이다.
                                                   //훈련 배치 사이즈만큼 (ex: 20)
+                Log.d("batch size", batch.size() + " " + Arrays.toString(batch.get(0).bottleneck));
                 if (Thread.interrupted()) { //쓰레드가 중단되었을 때
                   break epochLoop; //go to 구문
                 }
@@ -328,7 +329,7 @@ public final class TransferLearningModel implements Closeable {
   /** Training model expected batch size. */
   public int getTrainBatchSize() {  //훈련 배치 사이즈
     return Math.min(  //1 ~ 훈련 샘플 사이즈 중 최대값과, expectedBatchSize( = 20)중 최소값 리턴  -> 최소 1장의 훈련 샘플 필요
-        Math.max(/* at least one sample needed */ 1, trainingSamples.size()),
+        Math.max(/* at least one sample needed */ 1, SAMPLE_NUM),
         model.getExpectedBatchSize());
   }
 
@@ -344,7 +345,7 @@ public final class TransferLearningModel implements Closeable {
     }
     trainingInferenceLock.unlock(); //lock 해제
 
-    Collections.shuffle(trainingSamples); //training Samples 랜덤하게 셔플
+//    Collections.shuffle(trainingSamples); //training Samples 랜덤하게 셔플
     return () ->
         new Iterator<List<TrainingSample>>() {
           private int nextIndex = 0;
@@ -352,29 +353,81 @@ public final class TransferLearningModel implements Closeable {
           @RequiresApi(api = Build.VERSION_CODES.O)
           @Override
           public boolean hasNext() {
-            //----파일 크기 리턴하는부분----
-            try {
-              long lineCount = Files.lines(Paths.get(MainActivity.dir+"/sample.txt")).count();
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            //--------------------------
-            return nextIndex < trainingSamples.size();  //샘플이 남아 있으면 true
+            return nextIndex < SAMPLE_NUM;  //샘플이 남아 있으면 true
           }
 
 
+          @RequiresApi(api = Build.VERSION_CODES.O)
           @Override
           public List<TrainingSample> next() {
-            int fromIndex = nextIndex;  //시작 index
-            int toIndex = nextIndex + trainBatchSize; //목표 index = nextIndex + 배치 사이즈
-            nextIndex = toIndex;  //nextIndex 업데이트
-            if (toIndex >= trainingSamples.size()) {  //목표 인덱스보다 훈련 샘플이 작을 때
+            int fromIndex = nextIndex;  //시작 index ex: 0
+            int toIndex = nextIndex + trainBatchSize; //목표 index = nextIndex + 배치 사이즈 ex: 20
+            nextIndex = toIndex;  //nextIndex 업데이트 ex: 20
+            List<TrainingSample> trainingSamples_file = new ArrayList<>(); //샘플 리턴 위한 list
+            if (toIndex >= SAMPLE_NUM) {  //목표 인덱스보다 훈련 샘플이 작을 때
               // To keep batch size consistent, last batch may include some elements from the
               // next-to-last batch.
-              return trainingSamples.subList(
-                  trainingSamples.size() - trainBatchSize, trainingSamples.size()); //훈련샘플 크기 30 - 배치 사이즈 20 ~ 훈련샘플 사이즈 30  -> 10~30
+
+              //----------파일읽기----------
+              for (int j = SAMPLE_NUM - 1; j > SAMPLE_NUM - trainBatchSize - 1; j --) {
+                Stream<String> stream = null;
+                try {
+                  stream = Files.lines(Paths.get(MainActivity.dir+"/sample.txt"));
+                } catch (IOException e) {
+                  e.printStackTrace();
+                }
+                String line = stream.skip(j).findFirst().get();  //n번 라인 출력
+
+                String[] temp = line.replace("[", "")
+                        .replace("]", "")
+                        .replace(" ", "")
+                        .split("[,/]");
+                float[] bottleneck_file = new float[62720];
+                float[] oneHotEncodedClass_file = new float[4];
+                for (int i = 0; i < 62724; i++) {
+                  if (i < 4) {
+                    oneHotEncodedClass_file[i] = Float.parseFloat(temp[i]);
+                  } else {
+                    bottleneck_file[i - 4] = Float.parseFloat(temp[i]);
+                  }
+                }
+
+                trainingSamples_file.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
+              }
+              Collections.shuffle(trainingSamples_file);
+              return trainingSamples_file;
+//               return trainingSamples.subList(
+//                  trainingSamples.size() - trainBatchSize, trainingSamples.size()); //훈련샘플 크기 30 - 배치 사이즈 20 ~ 훈련샘플 사이즈 30  -> 10~30
             } else {
-              return trainingSamples.subList(fromIndex, toIndex); //훈련샘플 20~40
+//              //----------파일읽기----------
+              for (int j = fromIndex; j < toIndex; j ++) {
+                Stream<String> stream = null;
+                try {
+                  stream = Files.lines(Paths.get(MainActivity.dir+"/sample.txt"));
+                } catch (IOException e) {
+                  e.printStackTrace();
+                }
+                String line = stream.skip(j).findFirst().get();  //n번 라인 출력
+
+                String[] temp = line.replace("[", "")
+                        .replace("]", "")
+                        .replace(" ", "")
+                        .split("[,/]");
+                float[] bottleneck_file = new float[62720];
+                float[] oneHotEncodedClass_file = new float[4];
+                for (int i = 0; i < 62724; i++) {
+                  if (i < 4) {
+                    oneHotEncodedClass_file[i] = Float.parseFloat(temp[i]);
+                  } else {
+                    bottleneck_file[i - 4] = Float.parseFloat(temp[i]);
+                  }
+                }
+                trainingSamples_file.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
+              }
+              Collections.shuffle(trainingSamples_file);
+              return trainingSamples_file;
+
+//              return trainingSamples.subList(fromIndex, toIndex); //훈련샘플 20~40
             }
           }
         };
