@@ -75,6 +75,7 @@ import org.tensorflow.lite.examples.transfer.databinding.CameraFragmentBinding;
  * Camera functionality (through CameraX) is heavily based on the official example:
  * https://github.com/android/camera/tree/master/CameraXBasic.
  */
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class CameraFragment extends Fragment {
 
   private static final int LOWER_BYTE_MASK = 0xFF;

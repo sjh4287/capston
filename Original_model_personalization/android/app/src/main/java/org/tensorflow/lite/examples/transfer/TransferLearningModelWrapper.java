@@ -64,6 +64,7 @@ public class TransferLearningModelWrapper implements Closeable {
   }
 
   // This method is thread-safe.
+  @RequiresApi(api = Build.VERSION_CODES.O)
   public Future<Void> addSample(float[][][] image, String className) {
     return model.addSample(image, className);
   }

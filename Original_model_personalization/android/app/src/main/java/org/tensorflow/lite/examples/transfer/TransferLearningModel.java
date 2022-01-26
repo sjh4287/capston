@@ -15,24 +15,21 @@ limitations under the License.
 
 package org.tensorflow.lite.examples.transfer;
 
-import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,6 +53,8 @@ public final class TransferLearningModel implements Closeable {
   /**
    * Prediction for a single class produced by the model.
    */
+  public static int SAMPLE_NUM = 0;
+
   public static class Prediction {
     private final String className;
     private final float confidence;
@@ -161,11 +160,17 @@ public final class TransferLearningModel implements Closeable {
           trainingInferenceLock.lockInterruptibly();//interrupt 가능한 lock
           try {
             float[] bottleneck = model.loadBottleneck(image); //이미지의 bottleneck 추출 float[62720]
+
+            Calendar now = Calendar.getInstance();
+            int minute = now.get(Calendar.MINUTE);
+            int nowSec = now.get(Calendar.SECOND);
+            int nowMilSec = now.get(Calendar.MILLISECOND);
+            Log.d("작업 시작시간",  minute+"분 "+nowSec + "." +nowMilSec +"초");
 //            trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
+
 
             //---------- 파일 쓰기----------
             File file = new File(MainActivity.dir+"/sample.txt");
-            Log.d("위치: ", MainActivity.dir);
             FileWriter fileWriter = new FileWriter(file, true);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             bufferedWriter.append(Arrays.toString(oneHotEncodedClass.get(className))).append("/");
@@ -176,13 +181,37 @@ public final class TransferLearningModel implements Closeable {
             //------------------------------
 
             //----------파일읽기----------
-            for (int i = 0; i < 20; i++) {
+
               Stream<String> stream = Files.lines(Paths.get(MainActivity.dir+"/sample.txt"));
 
-              String line = stream.skip(i).findFirst().get();
-              Log.d(i + "번라인", line);
-            }
+              String line = stream.skip(SAMPLE_NUM).findFirst().get();  //n번 라인 출력
+              SAMPLE_NUM++; //i 개의 샘플
             //------------------------------
+
+            String[] temp = line.replace("[","")
+                    .replace("]","")
+                    .replace(" ", "")
+                    .split("[,/]");
+            float[] bottleneck_file = new float[62720];
+            float[] oneHotEncodedClass_file = new float[4];
+            for (int i = 0; i < 62724; i ++) {
+              if (i < 4) {
+                oneHotEncodedClass_file[i] = Float.parseFloat(temp[i]);
+              } else {
+                bottleneck_file[i-4] = Float.parseFloat(temp[i]);
+              }
+            }
+            trainingSamples.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
+
+            //Log
+            Calendar now1 = Calendar.getInstance();
+            int minute1 = now1.get(Calendar.MINUTE);
+            int nowSec1 = now1.get(Calendar.SECOND);
+            int nowMilSec1 = now1.get(Calendar.MILLISECOND);
+
+            Log.d("작업 종료시간",  minute1+"분 "+nowSec1 + "." +nowMilSec1+"초");
+
+
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -326,7 +355,6 @@ public final class TransferLearningModel implements Closeable {
             //----파일 크기 리턴하는부분----
             try {
               long lineCount = Files.lines(Paths.get(MainActivity.dir+"/sample.txt")).count();
-              Log.d("fileLines: ", lineCount +" ");
             } catch (Exception e) {
               e.printStackTrace();
             }
