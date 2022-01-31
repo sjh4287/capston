@@ -202,7 +202,7 @@ public class CameraFragment extends Fragment {
           inferenceBenchmark.endStage(imageId, "predict");
 
           for (TransferLearningModel.Prediction prediction : predictions) {
-            Log.d("추론 실행", prediction.getClassName() + prediction.getConfidence());
+//            Log.d("추론 실행", prediction.getClassName()+ " " + prediction.getConfidence());
             viewModel.setConfidence(prediction.getClassName(), prediction.getConfidence());
           }
         }
@@ -349,7 +349,7 @@ public class CameraFragment extends Fragment {
     dataBinding.setVm(viewModel);
     View rootView = dataBinding.getRoot();
 
-//    for (int i = 0; i < 1000; i++) {
+//    for (int i = 0; i < 10000; i++) {
 //      addSampleRequests.add("1");
 //      addSampleRequests.add("2");
 //      addSampleRequests.add("3");

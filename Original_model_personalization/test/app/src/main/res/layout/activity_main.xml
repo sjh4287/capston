@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="org.tensorflow.lite.examples.transfer.MainActivity">
+    tools:context="com.example.myapplication.MainActivity">
 
   <FrameLayout
       android:layout_width="match_parent"
