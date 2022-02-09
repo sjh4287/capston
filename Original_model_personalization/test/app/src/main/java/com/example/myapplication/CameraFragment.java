@@ -57,10 +57,12 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.myapplication.databinding.CameraFragmentBinding;
+import com.example.myapplication.databse.SampleDAO;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.nio.ByteBuffer;
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
@@ -179,8 +181,14 @@ public class CameraFragment extends Fragment {
         if (sampleClass != null) {  //queue 에서 꺼낸 값이 null 이 아닐 때
           inferenceBenchmark.startStage(imageId, "addSample");  //실행 시간 측정
           try {
-            tlModel.addSample(rgbImage, sampleClass).get(); //model 에 이미지, 라벨 값을 입력하여 샘플을 추가하고 return null
             Log.d("ADD Sample: ", sampleClass);
+            Calendar now = Calendar.getInstance();
+            Log.d("작업 시작시간",  now.get(Calendar.MINUTE)+ "분 "
+                    +now.get(Calendar.SECOND) + "."
+                    +now.get(Calendar.MILLISECOND) + "초");
+
+            tlModel.addSample(rgbImage, sampleClass).get(); //model 에 이미지, 라벨 값을 입력하여 샘플을 추가하고 return null
+
           } catch (ExecutionException e) {
             throw new RuntimeException("Failed to add sample to model", e.getCause());
           } catch (InterruptedException e) {
@@ -196,7 +204,6 @@ public class CameraFragment extends Fragment {
           inferenceBenchmark.startStage(imageId, "predict");
           TransferLearningModel.Prediction[] predictions = tlModel.predict(rgbImage);
           if (predictions == null) {
-            Log.d("추론 null값", "ㅇㅇ");
             return;
           }
           inferenceBenchmark.endStage(imageId, "predict");
@@ -349,12 +356,12 @@ public class CameraFragment extends Fragment {
     dataBinding.setVm(viewModel);
     View rootView = dataBinding.getRoot();
 
-//    for (int i = 0; i < 100; i++) {
-//      addSampleRequests.add("1");
-//      addSampleRequests.add("2");
-//      addSampleRequests.add("3");
-//      addSampleRequests.add("4");
-//    }
+    for (int i = 0; i < 500; i++) {
+      addSampleRequests.add("1");
+      addSampleRequests.add("2");
+      addSampleRequests.add("3");
+      addSampleRequests.add("4");
+    }
 
     for (int buttonId : new int[] { //버튼 클릭리스너
         R.id.class_btn_1, R.id.class_btn_2, R.id.class_btn_3, R.id.class_btn_4}) {

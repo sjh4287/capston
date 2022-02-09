@@ -23,6 +23,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.FragmentActivity;
 
+import com.example.myapplication.databse.SampleDAO;
+
 import java.io.File;
 
 /**
@@ -31,24 +33,18 @@ import java.io.File;
 
 public class MainActivity extends FragmentActivity {
 
-    public static String dir = "";
-
   @RequiresApi(api = Build.VERSION_CODES.R)
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    //비정상 종료 예외처리
-    Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     // If we're being restored from a previous state,
     // then we don't need to do anything and should return or else
     // we could end up with overlapping fragments.
     if (savedInstanceState != null) {
       return;
     }
-
-    dir = getFilesDir().getAbsolutePath();
 
     PermissionsFragment firstFragment = new PermissionsFragment();
 
@@ -74,27 +70,4 @@ public class MainActivity extends FragmentActivity {
               }
             });
   }
-    //----------비정상 종료 예외처리----------
-    class ExceptionHandler implements Thread.UncaughtExceptionHandler {
-
-        @Override
-        public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
-            e.printStackTrace();
-            File file = new File(dir+"/sample.txt");
-            file.delete();
-            Log.d("파일 삭제됨", "파일 삭제됨");
-            android.os.Process.killProcess(android.os.Process.myPid());
-            System.exit(10);
-        }
-    }
-    //---------------------------------
-    //----------종료시 파일 삭제----------
-    @Override
-    protected void onDestroy() {
-        File file = new File(dir+"/sample.txt");
-        file.delete();
-        Log.d("파일 삭제됨", "파일 삭제됨");
-      super.onDestroy();
-    }
-    //---------------------------------
 }

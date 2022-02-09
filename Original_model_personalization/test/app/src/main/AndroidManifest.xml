@@ -12,6 +12,7 @@
 
 
     <application
+        android:name=".OriginalApplication"
         android:largeHeap="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
