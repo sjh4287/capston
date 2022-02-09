@@ -7,6 +7,9 @@
       <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/5d57eca2cfdcdd0d7b163fc9f2908280/transformed/tensorflow-lite-0.0.0-nightly-SNAPSHOT/jars/classes.jar!/" />
       <root url="file://$USER_HOME$/.gradle/caches/transforms-3/5d57eca2cfdcdd0d7b163fc9f2908280/transformed/tensorflow-lite-0.0.0-nightly-SNAPSHOT/AndroidManifest.xml" />
       <root url="file://$USER_HOME$/.gradle/caches/transforms-3/5d57eca2cfdcdd0d7b163fc9f2908280/transformed/tensorflow-lite-0.0.0-nightly-SNAPSHOT/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/e4cd23580e7f268a81c614ce5d7b6655/transformed/tensorflow-lite-0.0.0-nightly-SNAPSHOT/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/e4cd23580e7f268a81c614ce5d7b6655/transformed/tensorflow-lite-0.0.0-nightly-SNAPSHOT/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/e4cd23580e7f268a81c614ce5d7b6655/transformed/tensorflow-lite-0.0.0-nightly-SNAPSHOT/AndroidManifest.xml" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

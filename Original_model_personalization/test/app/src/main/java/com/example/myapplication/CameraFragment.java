@@ -125,6 +125,7 @@ public class CameraFragment extends Fragment {
         .setLensFacing(LENS_FACING) //렌즈 방향 - 후면 카메라
         .setTargetAspectRatio(screenAspectRatio)  //가로 세로 비율 결정
         .setTargetRotation(viewFinder.getDisplay().getRotation()) //회전 결정
+        .setTargetRotation(viewFinder.getDisplay().getRotation()) //회전 결정
         .build(); //build
 
     Preview preview = new Preview(config);  //미리보기 뷰 생성
@@ -349,12 +350,12 @@ public class CameraFragment extends Fragment {
     dataBinding.setVm(viewModel);
     View rootView = dataBinding.getRoot();
 
-//    for (int i = 0; i < 100; i++) {
-//      addSampleRequests.add("1");
-//      addSampleRequests.add("2");
-//      addSampleRequests.add("3");
-//      addSampleRequests.add("4");
-//    }
+    for (int i = 0; i < 100; i++) {
+      addSampleRequests.add("1");
+      addSampleRequests.add("2");
+      addSampleRequests.add("3");
+      addSampleRequests.add("4");
+    }
 
     for (int buttonId : new int[] { //버튼 클릭리스너
         R.id.class_btn_1, R.id.class_btn_2, R.id.class_btn_3, R.id.class_btn_4}) {
