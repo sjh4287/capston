@@ -382,8 +382,6 @@ public final class TransferLearningModel implements Closeable {
                           .replace(" ", "")
                           .split("[,/]");
 
-                  Log.d("확인", Arrays.toString(temp));
-
                   float[] bottleneck_file = new float[62720];
                   float[] oneHotEncodedClass_file = new float[4];
                   for (int i = 0; i < 62724; i++) {
@@ -394,7 +392,6 @@ public final class TransferLearningModel implements Closeable {
                     }
                   }
                   trainingSamples_file.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
-
 
                 } catch (IOException e) {
                   e.printStackTrace();
@@ -428,8 +425,6 @@ public final class TransferLearningModel implements Closeable {
                           .replace("]", "")
                           .replace(" ", "")
                           .split("[,/]");
-
-                  Log.d("확인", Arrays.toString(temp) + " " + temp.length);
 
                   float[] bottleneck_file = new float[62720];
                   float[] oneHotEncodedClass_file = new float[4];
