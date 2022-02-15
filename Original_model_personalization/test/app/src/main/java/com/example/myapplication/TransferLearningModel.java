@@ -23,8 +23,10 @@ import androidx.annotation.RequiresApi;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -36,6 +38,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -162,55 +165,33 @@ public final class TransferLearningModel implements Closeable {
             float[] bottleneck = model.loadBottleneck(image); //이미지의 bottleneck 추출 float[62720]
 
 //            작업 시간 측정
-//            Calendar now = Calendar.getInstance();
-//            Log.d("작업 시작시간",  now.get(Calendar.MINUTE)+ "분 "
-//                    +now.get(Calendar.SECOND) + "."
-//                    +now.get(Calendar.MILLISECOND) + "초");
+            Calendar now = Calendar.getInstance();
+            Log.d("작업 시작시간",  now.get(Calendar.MINUTE)+ "분 "
+                    +now.get(Calendar.SECOND) + "."
+                    +now.get(Calendar.MILLISECOND) + "초");
 
 
 //            ---------- 파일 쓰기----------
+//
             File file = new File(MainActivity.dir+"/sample.txt");
-            FileWriter fileWriter = new FileWriter(file, true);
-            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-            bufferedWriter.append(Arrays.toString(oneHotEncodedClass.get(className))).append("/");
-            bufferedWriter.append(Arrays.toString(bottleneck));
-            bufferedWriter.newLine();
-            bufferedWriter.close();
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            randomAccessFile.seek(SAMPLE_NUM * 400000L);
+            randomAccessFile.writeBytes(Arrays.toString(oneHotEncodedClass.get(className)) + "/" + Arrays.toString(bottleneck));
+            randomAccessFile.close();
+
 //            ------------------------------
 
             SAMPLE_NUM++; //샘플 수 증가
 
-////            //----------파일읽기----------
-//            Stream<String> stream = Files.lines(Paths.get(MainActivity.dir+"/sample.txt"));
-//
-//            String line = stream.skip(SAMPLE_NUM).findFirst().get();  //n번 라인 출력
-//
-//            String[] temp = line.replace("[","")
-//                    .replace("]","")
-//                    .replace(" ", "")
-//                    .split("[,/]");
-//            float[] bottleneck_file = new float[62720];
-//            float[] oneHotEncodedClass_file = new float[4];
-//            for (int i = 0; i < 62724; i ++) {
-//              if (i < 4) {
-//                oneHotEncodedClass_file[i] = Float.parseFloat(temp[i]);
-//              } else {
-//                bottleneck_file[i-4] = Float.parseFloat(temp[i]);
-//              }
-//            }
-//            stream.close();
-
 ////            //------------------------------
-//            //파일을 쓰고 읽어서 float 배열로 변환 후 샘플 추가
-//            trainingSamples.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
             //샘플 추가
 //            trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
 
-            //작업 시간 측정
-//           Calendar now1 = Calendar.getInstance();
-//            Log.d("작업 종료시간",  now1.get(Calendar.MINUTE)+ "분 "
-//                    +now1.get(Calendar.SECOND) + "."
-//                    +now1.get(Calendar.MILLISECOND) +"초");
+//            작업 시간 측정
+           Calendar now1 = Calendar.getInstance();
+            Log.d("작업 종료시간",  now1.get(Calendar.MINUTE)+ "분 "
+                    +now1.get(Calendar.SECOND) + "."
+                    +now1.get(Calendar.MILLISECOND) +"초");
 
 
           } catch (Exception e) {
@@ -257,7 +238,14 @@ public final class TransferLearningModel implements Closeable {
               float totalLoss = 0;  //총 loss 값
               int numBatchesProcessed = 0;  //배치 프로세스 수
 
-              for (List<TrainingSample> batch : trainingBatches(trainBatchSize)) {  //for (A : B) 는 B의 값이 없을 때 까지 B에서 하나씩 꺼내서 A에게 넣는다는 의미이다.
+              List<Integer> shuffle = new ArrayList<>();
+              for (int i = 0; i < SAMPLE_NUM; i++) {
+                shuffle.add(i);
+              }
+              Collections.shuffle(shuffle);
+              File file = new File(MainActivity.dir+"/sample.txt");
+              RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+              for (List<TrainingSample> batch : trainingBatches(trainBatchSize, shuffle, randomAccessFile)) {  //for (A : B) 는 B의 값이 없을 때 까지 B에서 하나씩 꺼내서 A에게 넣는다는 의미이다.
                                                   //훈련 배치 사이즈만큼 (ex: 20)
                 if (Thread.interrupted()) { //쓰레드가 중단되었을 때
                   break epochLoop; //go to 구문
@@ -273,6 +261,8 @@ public final class TransferLearningModel implements Closeable {
                 totalLoss += loss;  //totalLoss add
                 numBatchesProcessed++;  //처리한 배치 수 add
               }
+
+              randomAccessFile.close();
 
               float avgLoss = totalLoss / numBatchesProcessed;  //totalLoss / 배치 수
               if (lossConsumer != null) { //lossConsumer null 이면
@@ -342,7 +332,7 @@ public final class TransferLearningModel implements Closeable {
    * @param trainBatchSize batch size for training.
    * @return iterator over batches.
    */
-  private Iterable<List<TrainingSample>> trainingBatches(int trainBatchSize) {
+  private Iterable<List<TrainingSample>> trainingBatches(int trainBatchSize, List<Integer> shuffle,  RandomAccessFile randomAccessFile) {
     if (!trainingInferenceLock.tryLock()) { //lock 시도 실패시 Throw
       throw new RuntimeException("Thread calling trainingBatches() must hold the training lock");
     }
@@ -381,36 +371,19 @@ public final class TransferLearningModel implements Closeable {
                     +now.get(Calendar.MILLISECOND) + "초");
 
               //----------파일읽기----------
-
               for (int j = SAMPLE_NUM - 1; j > SAMPLE_NUM - trainBatchSize - 1; j --) {
-                Stream<String> stream = null;
-
-                Calendar now2 = Calendar.getInstance();
-                Log.d("Stream 선언",  now2.get(Calendar.MINUTE)+ "분 "
-                        +now2.get(Calendar.SECOND) + "."
-                        +now2.get(Calendar.MILLISECOND) + "초");
-
                 try {
-                  stream = Files.lines(Paths.get(MainActivity.dir+"/sample.txt"));
 
-                  Calendar now1 = Calendar.getInstance();
-                  Log.d("파일 읽기",  now1.get(Calendar.MINUTE)+ "분 "
-                          +now1.get(Calendar.SECOND) + "."
-                          +now1.get(Calendar.MILLISECOND) + "초");
-
-
-                  String line = stream.skip(j).findFirst().get();  //n번 라인 출력
-
-                  Calendar now3 = Calendar.getInstance();
-                  Log.d("라인 읽기",  now3.get(Calendar.MINUTE)+ "분 "
-                          +now3.get(Calendar.SECOND) + "."
-                          +now3.get(Calendar.MILLISECOND) + "초");
-
-
-                  String[] temp = line.replace("[", "")
+                  randomAccessFile.seek(shuffle.get(j) * 400000);
+                  byte[] data = new byte[400000];
+                  randomAccessFile.read(data);
+                  String[] temp = new String(data).trim().replace("[", "")
                           .replace("]", "")
                           .replace(" ", "")
                           .split("[,/]");
+
+                  Log.d("확인", Arrays.toString(temp));
+
                   float[] bottleneck_file = new float[62720];
                   float[] oneHotEncodedClass_file = new float[4];
                   for (int i = 0; i < 62724; i++) {
@@ -422,21 +395,12 @@ public final class TransferLearningModel implements Closeable {
                   }
                   trainingSamples_file.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
 
-                  Calendar now4 = Calendar.getInstance();
-                  Log.d("String Float 변환후 추가",  now4.get(Calendar.MINUTE)+ "분 "
-                          +now4.get(Calendar.SECOND) + "."
-                          +now4.get(Calendar.MILLISECOND) + "초");
-
 
                 } catch (IOException e) {
                   e.printStackTrace();
-                } finally {
-                  stream.close();
                 }
               }
-              Collections.shuffle(trainingSamples_file);
-              Log.d("샘플 수가 목표보다 작을 때", "샘플 셔플 후 리턴");
-              //작업 시간 측정
+
             Calendar now1 = Calendar.getInstance();
             Log.d("작업 종료시간",  now1.get(Calendar.MINUTE)+ "분 "
                     +now1.get(Calendar.SECOND) + "."
@@ -455,35 +419,18 @@ public final class TransferLearningModel implements Closeable {
 
 //              ----------파일읽기----------
               for (int j = fromIndex; j < toIndex; j ++) {
-                Stream<String> stream = null;
-
-                Calendar now2 = Calendar.getInstance();
-                Log.d("Stream 선언",  now2.get(Calendar.MINUTE)+ "분 "
-                        +now2.get(Calendar.SECOND) + "."
-                        +now2.get(Calendar.MILLISECOND) + "초");
-
-
                 try {
-                  stream = Files.lines(Paths.get(MainActivity.dir+"/sample.txt"));
 
-                  Calendar now1 = Calendar.getInstance();
-                  Log.d("파일 읽기",  now1.get(Calendar.MINUTE)+ "분 "
-                          +now1.get(Calendar.SECOND) + "."
-                          +now1.get(Calendar.MILLISECOND) + "초");
-
-
-                  String line = stream.skip(j).findFirst().get();  //n번 라인 출력
-
-                  Calendar now3 = Calendar.getInstance();
-                  Log.d("라인 읽기",  now3.get(Calendar.MINUTE)+ "분 "
-                          +now3.get(Calendar.SECOND) + "."
-                          +now3.get(Calendar.MILLISECOND) + "초");
-
-
-                  String[] temp = line.replace("[", "")
+                  randomAccessFile.seek(shuffle.get(j) * 400000);
+                  byte[] data = new byte[400000];
+                  randomAccessFile.read(data);
+                  String[] temp = new String(data).trim().replace("[", "")
                           .replace("]", "")
                           .replace(" ", "")
                           .split("[,/]");
+
+                  Log.d("확인", Arrays.toString(temp) + " " + temp.length);
+
                   float[] bottleneck_file = new float[62720];
                   float[] oneHotEncodedClass_file = new float[4];
                   for (int i = 0; i < 62724; i++) {
@@ -495,19 +442,12 @@ public final class TransferLearningModel implements Closeable {
                   }
                   trainingSamples_file.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
 
-                  Calendar now4 = Calendar.getInstance();
-                  Log.d("String Float 변환후 추가",  now4.get(Calendar.MINUTE)+ "분 "
-                          +now4.get(Calendar.SECOND) + "."
-                          +now4.get(Calendar.MILLISECOND) + "초");
 
                 } catch (IOException e) {
                   e.printStackTrace();
-                } finally {
-                  stream.close();
                 }
               }
-              Collections.shuffle(trainingSamples_file);
-              //작업 시간 측정
+
               Calendar now1 = Calendar.getInstance();
               Log.d("작업 종료시간",  now1.get(Calendar.MINUTE)+ "분 "
                     +now1.get(Calendar.SECOND) + "."

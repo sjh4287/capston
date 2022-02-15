@@ -202,7 +202,7 @@ public class CameraFragment extends Fragment {
           inferenceBenchmark.endStage(imageId, "predict");
 
           for (TransferLearningModel.Prediction prediction : predictions) {
-            Log.d("추론 실행", prediction.getClassName()+ " " + prediction.getConfidence());
+//            Log.d("추론 실행", prediction.getClassName()+ " " + prediction.getConfidence());
             viewModel.setConfidence(prediction.getClassName(), prediction.getConfidence());
           }
         }
@@ -227,8 +227,7 @@ public class CameraFragment extends Fragment {
                       sampleCollectionHandler.postDelayed(this, LONG_PRESS_DURATION); //다시 0.5초 뒤에 다시 쓰레드 실행
                     } else if (isCollectingSamples) { //isCollectingSample = true, 버튼 눌러진시간 >= 0.5초
                       String className = getClassNameFromResourceId(view.getId());  //클래스 이름 = view 의 ID
-                      viewModel.setNumCollectedSamples(
-                          viewModel.getNumSamples().getValue().get(className) + 1); //ViewModel 의 샘플 수 ++
+                      viewModel.setNumCollectedSamples(viewModel.getNumSamples().getValue().get(className) + 1); //ViewModel 의 샘플 수 ++
                       sampleCollectionHandler.postDelayed(this, SAMPLE_COLLECTION_DELAY); //0.3초 뒤에 다시 실행
                       viewModel.setSampleCollectionLongPressed(true); //ViewModel 의 LongPressed true 로 설정
                     }
@@ -349,12 +348,12 @@ public class CameraFragment extends Fragment {
     dataBinding.setVm(viewModel);
     View rootView = dataBinding.getRoot();
 
-//    for (int i = 0; i < 100; i++) {
-//      addSampleRequests.add("1");
-//      addSampleRequests.add("2");
-//      addSampleRequests.add("3");
-//      addSampleRequests.add("4");
-//    }
+    for (int i = 0; i < 500; i++) {
+      addSampleRequests.add("1");
+      addSampleRequests.add("2");
+      addSampleRequests.add("3");
+      addSampleRequests.add("4");
+    }
 
     for (int buttonId : new int[] { //버튼 클릭리스너
         R.id.class_btn_1, R.id.class_btn_2, R.id.class_btn_3, R.id.class_btn_4}) {

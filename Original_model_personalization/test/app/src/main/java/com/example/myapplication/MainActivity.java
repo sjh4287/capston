@@ -39,7 +39,13 @@ public class MainActivity extends FragmentActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    //비정상 종료 예외처리
+    dir = getFilesDir().getAbsolutePath();
+
+    File file = new File(dir+"/sample.txt");
+    file.delete();
+    Log.d("파일 삭제됨", "파일 삭제됨");
+
+      //비정상 종료 예외처리
     Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
     // If we're being restored from a previous state,
     // then we don't need to do anything and should return or else
@@ -47,8 +53,6 @@ public class MainActivity extends FragmentActivity {
     if (savedInstanceState != null) {
       return;
     }
-
-    dir = getFilesDir().getAbsolutePath();
 
     PermissionsFragment firstFragment = new PermissionsFragment();
 
