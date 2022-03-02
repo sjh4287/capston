@@ -15,6 +15,7 @@ limitations under the License.
 
 package com.example.myapplication;
 
+import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,7 +42,7 @@ public class MainActivity extends FragmentActivity {
 
     dir = getFilesDir().getAbsolutePath();
 
-    File file = new File(dir+"/sample.txt");
+    File file = new File(MainActivity.dir +"/sample.txt");
     file.delete();
     Log.d("파일 삭제됨", "파일 삭제됨");
 
@@ -84,7 +85,7 @@ public class MainActivity extends FragmentActivity {
         @Override
         public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
             e.printStackTrace();
-            File file = new File(dir+"/sample.txt");
+            File file = new File(MainActivity.dir +"/sample.txt");
             file.delete();
             Log.d("파일 삭제됨", "파일 삭제됨");
             android.os.Process.killProcess(android.os.Process.myPid());
@@ -95,7 +96,7 @@ public class MainActivity extends FragmentActivity {
     //----------종료시 파일 삭제----------
     @Override
     protected void onDestroy() {
-        File file = new File(dir+"/sample.txt");
+        File file = new File(MainActivity.dir +"/sample.txt");
         file.delete();
         Log.d("파일 삭제됨", "파일 삭제됨");
       super.onDestroy();
