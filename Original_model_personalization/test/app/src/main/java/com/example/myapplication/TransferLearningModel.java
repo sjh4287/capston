@@ -166,8 +166,8 @@ public final class TransferLearningModel implements Closeable {
                     +now.get(Calendar.MILLISECOND) + "초");
 
 //            ---------- 파일 쓰기----------
-//          샘플 수 1600 이하면 기존의 방식 사용
-            if (SAMPLE_NUM >= 1600) {
+//          샘플 수 1700 이하면 기존의 방식 사용
+            if (SAMPLE_NUM >= 1700) {
               //파일 읽기
               File file = new File(MainActivity.dir+"/sample.data");
               RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
@@ -247,8 +247,8 @@ public final class TransferLearningModel implements Closeable {
               int numBatchesProcessed = 0;  //배치 프로세스 수
 
               List<Integer> shuffle = new ArrayList<>();
-              if (SAMPLE_NUM > 1600) {
-                for (int i = 0; i <= ((SAMPLE_NUM - 1600) / 20); i++) {
+              if (SAMPLE_NUM > 1700) {
+                for (int i = 0; i <= ((SAMPLE_NUM - 1700) / 20); i++) {
                   shuffle.add(i);
                 }
               }
@@ -373,7 +373,7 @@ public final class TransferLearningModel implements Closeable {
           int toIndex = nextIndex + trainBatchSize; //목표 index = nextIndex + 배치 사이즈 ex: 20
           nextIndex = toIndex;  //nextIndex 업데이트 ex: 20
 
-          if (SAMPLE_NUM < 1600) {  //1600개 이하일 때
+          if (SAMPLE_NUM < 1700) {  //1700개 이하일 때
 
             if (toIndex >= trainingSamples.size()) {
               // To keep batch size consistent, last batch may include some elements from the
@@ -383,10 +383,10 @@ public final class TransferLearningModel implements Closeable {
             } else {
               return trainingSamples.subList(fromIndex, toIndex);
             }
-          } else {    //1600개 이상일 때
+          } else {    //1700개 이상일 때
             List<TrainingSample> trainingSamples_file = new ArrayList<>(); //샘플 리턴 위한 list
             if (toIndex >= SAMPLE_NUM) {  //목표 인덱스보다 훈련 샘플이 작을 때
-              if (fromIndex < 1600) {
+              if (fromIndex < 1700) {
                 return trainingSamples.subList(
                         trainingSamples.size() - trainBatchSize, trainingSamples.size());
               } else {
@@ -422,10 +422,10 @@ public final class TransferLearningModel implements Closeable {
                 return trainingSamples_file;
               }
             } else {
-              if (fromIndex < 1600) {
+              if (fromIndex < 1700) {
                 return trainingSamples.subList(fromIndex, toIndex);
               } else {
-                int j = (fromIndex - 1600)/20;
+                int j = (fromIndex - 1700)/20;
                 try {
                   File file = new File(MainActivity.dir +"/sample.data");
                   RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
