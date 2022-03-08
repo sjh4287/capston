@@ -82,13 +82,13 @@ public final class TransferLearningModel implements Closeable {
   // Setting this to a higher value allows to calculate bottlenecks for more samples while
   // adding them to the bottleneck collection is blocked by an active training thread.
   private static final int NUM_THREADS =  //1, 사용 가능한 코어 수 - 1 중에 최대값
-      Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+          Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
 
   private final Map<String, Integer> classes;
   private final String[] classesByIdx;
   private final Map<String, float[]> oneHotEncodedClass;
 
-  private LiteMultipleSignatureModel model;
+  private final LiteMultipleSignatureModel model;
 
   private final List<TrainingSample> trainingSamples = new ArrayList<>();
 
@@ -113,8 +113,8 @@ public final class TransferLearningModel implements Closeable {
   public TransferLearningModel(ModelLoader modelLoader, Collection<String> classes) {
     try {
       this.model =  //모델로더에서 모델 읽기
-          new LiteMultipleSignatureModel( //새로운 모델 생성, 클래스 갯수 지정
-              modelLoader.loadMappedFile("model.tflite"), classes.size());
+              new LiteMultipleSignatureModel( //새로운 모델 생성, 클래스 갯수 지정
+                      modelLoader.loadMappedFile("model.tflite"), classes.size());
     } catch (IOException e) {
       throw new RuntimeException("Couldn't read underlying model for TransferLearningModel", e);
     }
@@ -125,9 +125,9 @@ public final class TransferLearningModel implements Closeable {
       String className = classesByIdx[classIdx];  //클래스 이름 = 클래스 순서대로 get
       this.classes.put(className, classIdx);    //클래스 맵에 이름, 순서 추가
       oneHotEncodedClass.put(className, oneHotEncoding(classIdx));  //One_hot_Encoding 해시맵에 0, [1, 0, 0, 0]
-                                                                    //                         1, [0, 1, 0, 0]
-                                                                    //                         2, [0, 0, 1, 0]
-                                                                    //                         3, [0, 0, 0, 1]  4가지 추가
+      //                         1, [0, 1, 0, 0]
+      //                         2, [0, 0, 1, 0]
+      //                         3, [0, 0, 0, 1]  4가지 추가
     }
   }
 
@@ -146,71 +146,71 @@ public final class TransferLearningModel implements Closeable {
 
     if (!classes.containsKey(className)) {  //클래스 이름이 일치하지 않으면 throw
       throw new IllegalArgumentException(String.format(
-          "Class \"%s\" is not one of the classes recognized by the model", className));
+              "Class \"%s\" is not one of the classes recognized by the model", className));
     }
 
     return executor.submit( //addSample.get() 시에 반환받음
-        () -> {
-          if (Thread.interrupted()) { //thread 가 종료되면 return null
-            return null;
-          }
+            () -> {
+              if (Thread.interrupted()) { //thread 가 종료되면 return null
+                return null;
+              }
 
-          trainingInferenceLock.lockInterruptibly();//interrupt 가능한 lock
-          try {
-            float[] bottleneck = model.loadBottleneck(image); //이미지의 bottleneck 추출 float[62720]
+              trainingInferenceLock.lockInterruptibly();//interrupt 가능한 lock
+              try {
+                float[] bottleneck = model.loadBottleneck(image); //이미지의 bottleneck 추출 float[62720]
 
 //            작업 시간 측정
-            Calendar now = Calendar.getInstance();
-            Log.d("샘플 추가 시작시간",  now.get(Calendar.MINUTE)+ "분 "
-                    +now.get(Calendar.SECOND) + "."
-                    +now.get(Calendar.MILLISECOND) + "초");
+                Calendar now = Calendar.getInstance();
+                Log.d("샘플 추가 시작시간",  now.get(Calendar.MINUTE)+ "분 "
+                        +now.get(Calendar.SECOND) + "."
+                        +now.get(Calendar.MILLISECOND) + "초");
 
 //            ---------- 파일 쓰기----------
 //          샘플 수 1700 이하면 기존의 방식 사용
-            if (SAMPLE_NUM >= 1700) {
-              //파일 읽기
-              File file = new File(MainActivity.dir+"/sample.data");
-              RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-              //파일 채널 생성
-              FileChannel fileChannel = randomAccessFile.getChannel();
-              fileChannel.position(SAMPLE_NUM * 62724 * 4L);
+                if (SAMPLE_NUM >= 1700) {
+                  //파일 읽기
+                  File file = new File(MainActivity.dir+"/sample.data");
+                  RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+                  //파일 채널 생성
+                  FileChannel fileChannel = randomAccessFile.getChannel();
+                  fileChannel.position((SAMPLE_NUM - 1700) * 62724 * 4L);
 
-              //bottleneck 추가
-              ByteBuffer buffer = ByteBuffer.allocate(62720 * 4);
-              buffer.clear();
-              buffer.rewind();
-              buffer.asFloatBuffer().put(bottleneck);
-              fileChannel.write(buffer);
+                  //bottleneck 추가
+                  ByteBuffer buffer = ByteBuffer.allocate(62720 * 4);
+                  buffer.clear();
+                  buffer.rewind();
+                  buffer.asFloatBuffer().put(bottleneck);
+                  fileChannel.write(buffer);
 
-              //oneHotEncodedClass 추가
+                  //oneHotEncodedClass 추가
 
-              ByteBuffer buffer1 = ByteBuffer.allocate(4 * 4);
-              buffer1.clear();
-              buffer1.rewind();
-              buffer1.asFloatBuffer().put(oneHotEncodedClass.get(className));
-              fileChannel.write(buffer1);
-              fileChannel.close();
+                  ByteBuffer buffer1 = ByteBuffer.allocate(4 * 4);
+                  buffer1.clear();
+                  buffer1.rewind();
+                  buffer1.asFloatBuffer().put(oneHotEncodedClass.get(className));
+                  fileChannel.write(buffer1);
+                  fileChannel.close();
 
-            } else {
-              trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
-            }
-            SAMPLE_NUM++; //샘플 수 증가
+                } else {
+                  trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
+                }
+                SAMPLE_NUM++; //샘플 수 증가
 
 //            작업 시간 측정
-           Calendar now1 = Calendar.getInstance();
-            Log.d("샘플 추가 종료시간",  now1.get(Calendar.MINUTE)+ "분 "
-                    +now1.get(Calendar.SECOND) + "."
-                    +now1.get(Calendar.MILLISECOND) +"초");
+                Calendar now1 = Calendar.getInstance();
+                Log.d("샘플 추가 종료시간",  now1.get(Calendar.MINUTE)+ "분 "
+                        +now1.get(Calendar.SECOND) + "."
+                        +now1.get(Calendar.MILLISECOND) +"초");
 
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-          finally {
-            trainingInferenceLock.unlock();
-          }
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+              finally {
+                trainingInferenceLock.unlock();
+              }
 
-          return null;  //return null
-        });
+              return null;  //return null
+            });
   }
 
   /**
@@ -227,9 +227,9 @@ public final class TransferLearningModel implements Closeable {
 
     if (SAMPLE_NUM < trainBatchSize) {  //샘플이 배치 사이즈보다 적으면
       throw new RuntimeException(                   //== 샘플이 0개이고 배치 사이즈가 1인 경우
-          String.format(
-              "Too few samples to start training: need %d, got %d",
-              trainBatchSize, SAMPLE_NUM));
+              String.format(
+                      "Too few samples to start training: need %d, got %d",
+                      trainBatchSize, SAMPLE_NUM));
     }
 
     Log.d ("학습 시작", "학습 배치 사이즈: " + trainBatchSize);
@@ -238,61 +238,62 @@ public final class TransferLearningModel implements Closeable {
     trainingBatchLabels = new float[trainBatchSize][this.classes.size()]; //배치 사이즈 * 라벨
 
     return executor.submit( //train.get() 을 호출하면 반환
-        () -> {
-          trainingInferenceLock.lock(); //lock
-          try {
-            epochLoop:  //go to 구문  //다시 실
-            for (int epoch = 0; epoch < numEpochs; epoch++) { //에폭 수 만큼 for 루프
-              float totalLoss = 0;  //총 loss 값
-              int numBatchesProcessed = 0;  //배치 프로세스 수
+            () -> {
+              trainingInferenceLock.lock(); //lock
+              try {
+                epochLoop:  //go to 구문  //다시 실
+                for (int epoch = 0; epoch < numEpochs; epoch++) { //에폭 수 만큼 for 루프
+                  float totalLoss = 0;  //총 loss 값
+                  int numBatchesProcessed = 0;  //배치 프로세스 수
 
-              List<Integer> shuffle = new ArrayList<>();
-              if (SAMPLE_NUM > 1700) {
-                for (int i = 0; i <= ((SAMPLE_NUM - 1700) / 20); i++) {
-                  shuffle.add(i);
+                  List<Integer> shuffle = new ArrayList<>();
+                  if (SAMPLE_NUM > 1700) {
+                    for (int i = 0; i < (SAMPLE_NUM - 1700); i++) {
+                      shuffle.add(i);
+                    }
+                  }
+                  Log.d("shuffle.size", shuffle.size()+" "+shuffle.get(shuffle.size()-1));
+                  Collections.shuffle(shuffle);
+
+                  Calendar now = Calendar.getInstance();
+                  Log.d("학습 시작시간",  now.get(Calendar.MINUTE)+ "분 "
+                          +now.get(Calendar.SECOND) + "."
+                          +now.get(Calendar.MILLISECOND) + "초");
+
+                  for (List<TrainingSample> batch : trainingBatches(trainBatchSize, shuffle)) {  //for (A : B) 는 B의 값이 없을 때 까지 B에서 하나씩 꺼내서 A에게 넣는다는 의미이다.
+                    //훈련 배치 사이즈만큼 (ex: 20)
+                    if (Thread.interrupted()) { //쓰레드가 중단되었을 때
+                      break epochLoop; //go to 구문
+                    }
+
+                    for (int sampleIdx = 0; sampleIdx < batch.size(); sampleIdx++) {  //배치 사이즈까지 반복 (ex: 20)
+                      TrainingSample sample = batch.get(sampleIdx);   //샘플 = trainingBatches 에서 가져온 샘플
+                      trainingBatchBottlenecks[sampleIdx] = sample.bottleneck;  //bottleneck, label 설정
+                      trainingBatchLabels[sampleIdx] = sample.label;
+                    }
+
+                    float loss = this.model.runTraining(trainingBatchBottlenecks, trainingBatchLabels); //loss 는 학습시킨 결과, bottleneck, label 투입
+                    totalLoss += loss;  //totalLoss add
+                    numBatchesProcessed++;  //처리한 배치 수 add
+                  }
+
+                  Calendar now1 = Calendar.getInstance();
+                  Log.d("학습 종료시간",  now1.get(Calendar.MINUTE)+ "분 "
+                          +now1.get(Calendar.SECOND) + "."
+                          +now1.get(Calendar.MILLISECOND) +"초");
+
+                  float avgLoss = totalLoss / numBatchesProcessed;  //totalLoss / 배치 수
+                  if (lossConsumer != null) { //lossConsumer null 이면
+                    lossConsumer.onLoss(epoch, avgLoss);  //lossConsumer 에 epoch, Loss 설정 ->  ViewModel.setLastLoss(loss)
+                  }
                 }
+
+                return null;
+              } finally {
+                Log.d("학습끝", "1epoch");
+                trainingInferenceLock.unlock(); //락 해제
               }
-              Collections.shuffle(shuffle);
-
-              Calendar now = Calendar.getInstance();
-              Log.d("학습 시작시간",  now.get(Calendar.MINUTE)+ "분 "
-                      +now.get(Calendar.SECOND) + "."
-                      +now.get(Calendar.MILLISECOND) + "초");
-
-              for (List<TrainingSample> batch : trainingBatches(trainBatchSize, shuffle)) {  //for (A : B) 는 B의 값이 없을 때 까지 B에서 하나씩 꺼내서 A에게 넣는다는 의미이다.
-                                                  //훈련 배치 사이즈만큼 (ex: 20)
-                if (Thread.interrupted()) { //쓰레드가 중단되었을 때
-                  break epochLoop; //go to 구문
-                }
-
-                for (int sampleIdx = 0; sampleIdx < batch.size(); sampleIdx++) {  //배치 사이즈까지 반복 (ex: 20)
-                  TrainingSample sample = batch.get(sampleIdx);   //샘플 = trainingBatches 에서 가져온 샘플
-                  trainingBatchBottlenecks[sampleIdx] = sample.bottleneck;  //bottleneck, label 설정
-                  trainingBatchLabels[sampleIdx] = sample.label;
-                }
-
-                float loss = this.model.runTraining(trainingBatchBottlenecks, trainingBatchLabels); //loss 는 학습시킨 결과, bottleneck, label 투입
-                totalLoss += loss;  //totalLoss add
-                numBatchesProcessed++;  //처리한 배치 수 add
-              }
-
-              Calendar now1 = Calendar.getInstance();
-              Log.d("학습 종료시간",  now1.get(Calendar.MINUTE)+ "분 "
-                      +now1.get(Calendar.SECOND) + "."
-                      +now1.get(Calendar.MILLISECOND) +"초");
-
-              float avgLoss = totalLoss / numBatchesProcessed;  //totalLoss / 배치 수
-              if (lossConsumer != null) { //lossConsumer null 이면
-                lossConsumer.onLoss(epoch, avgLoss);  //lossConsumer 에 epoch, Loss 설정 ->  ViewModel.setLastLoss(loss)
-              }
-            }
-
-            return null;
-          } finally {
-            Log.d("학습끝", "1epoch");
-            trainingInferenceLock.unlock(); //락 해제
-          }
-        });
+            });
   }
 
   /**
@@ -339,8 +340,8 @@ public final class TransferLearningModel implements Closeable {
   /** Training model expected batch size. */
   public int getTrainBatchSize() {  //훈련 배치 사이즈
     return Math.min(  //1 ~ 훈련 샘플 사이즈 중 최대값과, expectedBatchSize( = 20)중 최소값 리턴  -> 최소 1장의 훈련 샘플 필요
-        Math.max(/* at least one sample needed */ 1, SAMPLE_NUM),
-        model.getExpectedBatchSize());
+            Math.max(/* at least one sample needed */ 1, SAMPLE_NUM),
+            model.getExpectedBatchSize());
   }
 
   /**
@@ -357,109 +358,94 @@ public final class TransferLearningModel implements Closeable {
 
     Collections.shuffle(trainingSamples); //training Samples 랜덤하게 셔플
     return () ->
-      new Iterator<List<TrainingSample>>() {
-        private int nextIndex = 0;
+            new Iterator<List<TrainingSample>>() {
+              private int nextIndex = 0;
 
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        @Override
-        public boolean hasNext() {
-          return nextIndex < SAMPLE_NUM;  //샘플이 남아 있으면 true
-        }
-
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        @Override
-        public List<TrainingSample> next() {
-          int fromIndex = nextIndex;  //시작 index ex: 0
-          int toIndex = nextIndex + trainBatchSize; //목표 index = nextIndex + 배치 사이즈 ex: 20
-          nextIndex = toIndex;  //nextIndex 업데이트 ex: 20
-
-          if (SAMPLE_NUM < 1700) {  //1700개 이하일 때
-
-            if (toIndex >= trainingSamples.size()) {
-              // To keep batch size consistent, last batch may include some elements from the
-              // next-to-last batch.
-              return trainingSamples.subList(
-                      trainingSamples.size() - trainBatchSize, trainingSamples.size());
-            } else {
-              return trainingSamples.subList(fromIndex, toIndex);
-            }
-          } else {    //1700개 이상일 때
-            List<TrainingSample> trainingSamples_file = new ArrayList<>(); //샘플 리턴 위한 list
-            if (toIndex >= SAMPLE_NUM) {  //목표 인덱스보다 훈련 샘플이 작을 때
-              if (fromIndex < 1700) {
-                return trainingSamples.subList(
-                        trainingSamples.size() - trainBatchSize, trainingSamples.size());
-              } else {
-                try {
-                  File file = new File(MainActivity.dir +"/sample.data");
-                  RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-                  FileChannel fileChannel = randomAccessFile.getChannel();
-                  for (int k = 0; k < trainBatchSize; k ++) {
-                    fileChannel.position((SAMPLE_NUM - 1 - k) * 62724 * 4L);
-                    float[] bottleneck_file = new float[62720];
-                    float[] oneHotEncodedClass_file = new float[4];
-
-                    ByteBuffer buffer = ByteBuffer.allocate(62720 * 4);
-                    buffer.clear();
-                    fileChannel.read(buffer);
-                    buffer.rewind();
-                    buffer.asFloatBuffer().get(bottleneck_file);
-
-                    ByteBuffer buffer1 = ByteBuffer.allocate(4 * 4);
-                    buffer1.clear();
-                    fileChannel.read(buffer1);
-                    buffer1.rewind();
-                    buffer1.asFloatBuffer().get(oneHotEncodedClass_file);
-
-                    trainingSamples_file.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
-                  }
-                  fileChannel.close();
-                } catch (IOException e) {
-                  e.printStackTrace();
-                }
-                Collections.shuffle(trainingSamples_file);
-                Calendar now1 = Calendar.getInstance();
-                return trainingSamples_file;
+              @RequiresApi(api = Build.VERSION_CODES.O)
+              @Override
+              public boolean hasNext() {
+                return nextIndex < SAMPLE_NUM;  //샘플이 남아 있으면 true
               }
-            } else {
-              if (fromIndex < 1700) {
-                return trainingSamples.subList(fromIndex, toIndex);
-              } else {
-                int j = (fromIndex - 1700)/20;
-                try {
-                  File file = new File(MainActivity.dir +"/sample.data");
-                  RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-                  FileChannel fileChannel = randomAccessFile.getChannel();
-                  for (int k = 0; k < trainBatchSize; k ++) {
-                    fileChannel.position(((shuffle.get(j) * 20) + k) * 62724 * 4L);
-                    float[] bottleneck_file = new float[62720];
-                    float[] oneHotEncodedClass_file = new float[4];
 
-                    ByteBuffer buffer = ByteBuffer.allocate(62720 * 4);
-                    buffer.clear();
-                    fileChannel.read(buffer);
-                    buffer.rewind();
-                    buffer.asFloatBuffer().get(bottleneck_file);
+              @RequiresApi(api = Build.VERSION_CODES.O)
+              @Override
+              public List<TrainingSample> next() {
+                int fromIndex = nextIndex;  //시작 index ex: 0
+                int toIndex = nextIndex + trainBatchSize; //목표 index = nextIndex + 배치 사이즈 ex: 20
+                nextIndex = toIndex;  //nextIndex 업데이트 ex: 20
 
-                    ByteBuffer buffer1 = ByteBuffer.allocate(4 * 4);
-                    buffer1.clear();
-                    fileChannel.read(buffer1);
-                    buffer1.rewind();
-                    buffer1.asFloatBuffer().get(oneHotEncodedClass_file);
+                List<TrainingSample> trainingSamples_file = new ArrayList<>(); //샘플 리턴 위한 list
+                if (toIndex >= SAMPLE_NUM) {  //목표 인덱스보다 훈련 샘플이 작을 때
+                  if (fromIndex < 1700) {
+                    return trainingSamples.subList(
+                            trainingSamples.size() - trainBatchSize, trainingSamples.size());
+                  } else {
+                    try {
+                      File file = new File(MainActivity.dir +"/sample.data");
+                      RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+                      FileChannel fileChannel = randomAccessFile.getChannel();
+                      for (int k = SAMPLE_NUM - 1; k >= fromIndex; k --) {
+                        fileChannel.position(shuffle.get(k - 1700) * 62724 * 4L);
+                        float[] bottleneck_file = new float[62720];
+                        float[] oneHotEncodedClass_file = new float[4];
 
-                    trainingSamples_file.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
+                        ByteBuffer buffer = ByteBuffer.allocate(62720 * 4);
+                        buffer.clear();
+                        fileChannel.read(buffer);
+                        buffer.rewind();
+                        buffer.asFloatBuffer().get(bottleneck_file);
+
+                        ByteBuffer buffer1 = ByteBuffer.allocate(4 * 4);
+                        buffer1.clear();
+                        fileChannel.read(buffer1);
+                        buffer1.rewind();
+                        buffer1.asFloatBuffer().get(oneHotEncodedClass_file);
+
+                        trainingSamples_file.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
+                      }
+                      fileChannel.close();
+                    } catch (IOException e) {
+                      e.printStackTrace();
+                    }
+                    return trainingSamples_file;
                   }
-                  fileChannel.close();
-                } catch (IOException e) {
-                  e.printStackTrace();
+                } else {
+                  if (fromIndex < 1700) {
+                    return trainingSamples.subList(fromIndex, toIndex);
+                  } else {
+                    try {
+                      File file = new File(MainActivity.dir +"/sample.data");
+                      RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+                      FileChannel fileChannel = randomAccessFile.getChannel();
+                      for (int k = 0; k < trainBatchSize; k ++) {
+                        fileChannel.position(shuffle.get(fromIndex - 1700 + k) * 62724 * 4L);
+                        float[] bottleneck_file = new float[62720];
+                        float[] oneHotEncodedClass_file = new float[4];
+
+                        ByteBuffer buffer = ByteBuffer.allocate(62720 * 4);
+                        buffer.clear();
+                        fileChannel.read(buffer);
+                        buffer.rewind();
+                        buffer.asFloatBuffer().get(bottleneck_file);
+
+                        ByteBuffer buffer1 = ByteBuffer.allocate(4 * 4);
+                        buffer1.clear();
+                        fileChannel.read(buffer1);
+                        buffer1.rewind();
+                        buffer1.asFloatBuffer().get(oneHotEncodedClass_file);
+
+                        trainingSamples_file.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
+                      }
+                      fileChannel.close();
+                    } catch (IOException e) {
+                      e.printStackTrace();
+                    }
+                    return trainingSamples_file;
+                  }
                 }
-                Collections.shuffle(trainingSamples_file);
-                return trainingSamples_file;
+
               }
-            }
-          }
-        }
-      };
+            };
   }
 
   private int numBottleneckFeatures() { //bottleneckFeatures 수 리턴
