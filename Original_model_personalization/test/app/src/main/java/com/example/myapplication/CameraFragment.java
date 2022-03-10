@@ -180,7 +180,6 @@ public class CameraFragment extends Fragment {
           inferenceBenchmark.startStage(imageId, "addSample");  //실행 시간 측정
           try {
             tlModel.addSample(rgbImage, sampleClass).get(); //model 에 이미지, 라벨 값을 입력하여 샘플을 추가하고 return null
-            Log.d("ADD Sample: ", sampleClass);
           } catch (ExecutionException e) {
             throw new RuntimeException("Failed to add sample to model", e.getCause());
           } catch (InterruptedException e) {
@@ -348,7 +347,7 @@ public class CameraFragment extends Fragment {
     dataBinding.setVm(viewModel);
     View rootView = dataBinding.getRoot();
 
-//    for (int i = 0; i < 10000; i++) {
+//    for (int i = 0; i < 600; i++) {
 //      addSampleRequests.add("1");
 //      addSampleRequests.add("2");
 //      addSampleRequests.add("3");
