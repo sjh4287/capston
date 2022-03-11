@@ -195,7 +195,6 @@ public class CameraFragment extends Fragment {
           inferenceBenchmark.startStage(imageId, "predict");
           TransferLearningModel.Prediction[] predictions = tlModel.predict(rgbImage);
           if (predictions == null) {
-            Log.d("추론 null값", "ㅇㅇ");
             return;
           }
           inferenceBenchmark.endStage(imageId, "predict");
@@ -347,12 +346,12 @@ public class CameraFragment extends Fragment {
     dataBinding.setVm(viewModel);
     View rootView = dataBinding.getRoot();
 
-//    for (int i = 0; i < 600; i++) {
-//      addSampleRequests.add("1");
-//      addSampleRequests.add("2");
-//      addSampleRequests.add("3");
-//      addSampleRequests.add("4");
-//    }
+//      for (int  i = 0; i < 500; i++) {
+//        addSampleRequests.add("1");
+//        addSampleRequests.add("2");
+//        addSampleRequests.add("3");
+//        addSampleRequests.add("4");
+//      }
 
     for (int buttonId : new int[] { //버튼 클릭리스너
         R.id.class_btn_1, R.id.class_btn_2, R.id.class_btn_3, R.id.class_btn_4}) {
