@@ -43,7 +43,6 @@ public class MainActivity extends FragmentActivity {
     dir = getFilesDir().getAbsolutePath();
     File file = new File(MainActivity.dir +"/sample.data");
     file.delete();
-    Log.d("파일 삭제됨", "파일 삭제됨");
 
       //비정상 종료 예외처리
     Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
