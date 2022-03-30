@@ -15,18 +15,26 @@ limitations under the License.
 
 package com.example.myapplication;
 
+import static java.nio.file.Paths.get;
+
 import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -36,6 +44,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,7 +61,7 @@ public final class TransferLearningModel implements Closeable {
   /**
    * Prediction for a single class produced by the model.
    */
-  public static int SAMPLE_NUM = 0;
+  public static int SAMPLE_NUM = 0; //수정
 
   public static class Prediction {
     private final String className;
@@ -142,8 +151,11 @@ public final class TransferLearningModel implements Closeable {
    * @param image image RGB data.
    * @param className ground truth label for image.
    */
+
+  int count = 0; // 샘플 수 변수
+
   @RequiresApi(api = Build.VERSION_CODES.O)
-  public Future<Void> addSample(float[][][] image, String className) {  //샘플 추가
+  public Future<Void> addSample(float[][][] image, String className) throws IOException {  //샘플 추가
     checkNotTerminating();  //종료되었는지 확인
 
     if (!classes.containsKey(className)) {  //클래스 이름이 일치하지 않으면 throw
@@ -151,22 +163,82 @@ public final class TransferLearningModel implements Closeable {
               "Class \"%s\" is not one of the classes recognized by the model", className));
     }
 
+
     return executor.submit( //addSample.get() 시에 반환받음
             () -> {
               if (Thread.interrupted()) { //thread 가 종료되면 return null
                 return null;
               }
 
+
               trainingInferenceLock.lockInterruptibly();//interrupt 가능한 lock
-              try {
+              try {//수정
                 float[] bottleneck = model.loadBottleneck(image); //이미지의 bottleneck 추출 float[62720]
+
+                //재하----------------------------------------------------------
+//                File file2 = new File("sdcard/Test/testfile.data");
+//
+//
+//                RandomAccessFile randomAccessFile2 = new RandomAccessFile(file2, "rw");
+//
+//                //파일 채널 생성
+//                FileChannel fileChannel2 = randomAccessFile2.getChannel();
+//                fileChannel2.position(SAMPLE_NUM * 62724 * 4L);
+//
+//                //bottleneck 추가
+//                ByteBuffer buffer2 = ByteBuffer.allocate(62720 * 4);
+//                buffer2.clear();
+//                buffer2.rewind();
+//                buffer2.asFloatBuffer().put(bottleneck);
+//                fileChannel2.write(buffer2);
+//
+//
+//                //oneHotEncodedClass 추가
+//                ByteBuffer buffer3 = ByteBuffer.allocate(4 * 4);
+//                buffer3.clear();
+//                buffer3.rewind();
+//                buffer3.asFloatBuffer().put(oneHotEncodedClass.get(className));
+//                fileChannel2.write(buffer3);
+//                fileChannel2.close();
+                //----------------------------------------------------
+
 
 //            ---------- 파일 쓰기----------
 //          샘플 수 1700 이하면 기존의 방식 사용
                 if (SAMPLE_NUM >= 1700) {
+
+                  //재하2----------------------------------------------------
+                  File file6 = new File( "/sdcard/Test/testfile.data");
+                  RandomAccessFile randomAccessFile7;
+                  randomAccessFile7 = new RandomAccessFile(file6, "r");
+                  FileChannel fileChannel6 = randomAccessFile7.getChannel();
+
+                  fileChannel6.position(count * 62724 * 4L);
+                  float[] bottleneck_file = new float[62720];
+                  float[] oneHotEncodedClass_file = new float[4];
+
+                  ByteBuffer buffer6 = ByteBuffer.allocate(62720 * 4);
+                  buffer6.clear();
+                  fileChannel6.read(buffer6);
+                  buffer6.rewind();
+                  buffer6.asFloatBuffer().get(bottleneck_file);
+
+                  ByteBuffer buffer7 = ByteBuffer.allocate(4 * 4);
+                  buffer7.clear();
+                  fileChannel6.read(buffer7);
+                  buffer7.rewind();
+                  buffer7.asFloatBuffer().get(oneHotEncodedClass_file);
+
+                  count++;
+
+
+
                   //파일 읽기
                   File file = new File(MainActivity.dir+"/sample.data");
+
+
                   RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+
                   //파일 채널 생성
                   FileChannel fileChannel = randomAccessFile.getChannel();
                   fileChannel.position((SAMPLE_NUM - 1700) * 62724 * 4L);
@@ -175,21 +247,85 @@ public final class TransferLearningModel implements Closeable {
                   ByteBuffer buffer = ByteBuffer.allocate(62720 * 4);
                   buffer.clear();
                   buffer.rewind();
-                  buffer.asFloatBuffer().put(bottleneck);
+                  buffer.asFloatBuffer().put(bottleneck_file);
                   fileChannel.write(buffer);
+
 
                   //oneHotEncodedClass 추가
                   ByteBuffer buffer1 = ByteBuffer.allocate(4 * 4);
                   buffer1.clear();
                   buffer1.rewind();
-                  buffer1.asFloatBuffer().put(oneHotEncodedClass.get(className));
+                  buffer1.asFloatBuffer().put(oneHotEncodedClass_file);
                   fileChannel.write(buffer1);
                   fileChannel.close();
 
+                  //-------------------------------------------------------------
+
+
+                  //재하-----------------------------------------------------------
+                  //파일 읽기
+//                  File file = new File(MainActivity.dir+"/sample.data");
+//
+//
+//                  RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+//
+//                  //파일 채널 생성
+//                  FileChannel fileChannel = randomAccessFile.getChannel();
+//                  fileChannel.position((SAMPLE_NUM - 1700) * 62724 * 4L);
+//
+//                  //bottleneck 추가
+//                  ByteBuffer buffer = ByteBuffer.allocate(62720 * 4);
+//                  buffer.clear();
+//                  buffer.rewind();
+//                  buffer.asFloatBuffer().put(bottleneck);
+//                  fileChannel.write(buffer);
+//
+//
+//                  //oneHotEncodedClass 추가
+//                  ByteBuffer buffer1 = ByteBuffer.allocate(4 * 4);
+//                  buffer1.clear();
+//                  buffer1.rewind();
+//                  buffer1.asFloatBuffer().put(oneHotEncodedClass.get(className));
+//                  fileChannel.write(buffer1);
+//                  fileChannel.close();
+                  //------------------------------------------------------
+
                 } else {
-                  trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
+
+                    //재하2----------------------------------------------
+                  File file = new File( "/sdcard/Test/testfile.data");
+                  RandomAccessFile randomAccessFile;
+                  randomAccessFile = new RandomAccessFile(file, "r");
+                  FileChannel fileChannel = randomAccessFile.getChannel();
+
+                  fileChannel.position(count * 62724 * 4L);
+                  float[] bottleneck_file = new float[62720];
+                  float[] oneHotEncodedClass_file = new float[4];
+
+                  ByteBuffer buffer = ByteBuffer.allocate(62720 * 4);
+                  buffer.clear();
+                  fileChannel.read(buffer);
+                  buffer.rewind();
+                  buffer.asFloatBuffer().get(bottleneck_file);
+
+                  ByteBuffer buffer1 = ByteBuffer.allocate(4 * 4);
+                  buffer1.clear();
+                  fileChannel.read(buffer1);
+                  buffer1.rewind();
+                  buffer1.asFloatBuffer().get(oneHotEncodedClass_file);
+
+                  count++;
+                    //-----------------------------------------------------
+
+
+                  //재하
+//                  trainingSamples.add(new TrainingSample(bottleneck, oneHotEncodedClass.get(className))); //훈련 샘플 추가, bottleneck, on hot encoding
+                  //재하2
+                trainingSamples.add(new TrainingSample(bottleneck_file, oneHotEncodedClass_file));
+
                 }
                 SAMPLE_NUM++; //샘플 수 증가
+
               } catch (Exception e) {
                 e.printStackTrace();
               }
@@ -353,6 +489,7 @@ public final class TransferLearningModel implements Closeable {
               @RequiresApi(api = Build.VERSION_CODES.O)
               @Override
               public List<TrainingSample> next() {
+
                 int fromIndex = nextIndex;  //시작 index ex: 0
                 int toIndex = nextIndex + trainBatchSize; //목표 index = nextIndex + 배치 사이즈 ex: 20
                 nextIndex = toIndex;  //nextIndex 업데이트 ex: 20

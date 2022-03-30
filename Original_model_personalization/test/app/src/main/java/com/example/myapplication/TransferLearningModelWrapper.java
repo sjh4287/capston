@@ -18,10 +18,12 @@ package com.example.myapplication;
 import android.content.Context;
 import android.os.Build;
 import android.os.ConditionVariable;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -62,7 +64,7 @@ public class TransferLearningModelWrapper implements Closeable {
 
   // This method is thread-safe.
   @RequiresApi(api = Build.VERSION_CODES.O)
-  public Future<Void> addSample(float[][][] image, String className) {
+  public Future<Void> addSample(float[][][] image, String className) throws IOException {
     return model.addSample(image, className);
   }
 

@@ -76,6 +76,8 @@ public class MainActivity extends FragmentActivity {
                         });
               }
             });
+
+
   }
     //----------비정상 종료 예외처리----------
     class ExceptionHandler implements Thread.UncaughtExceptionHandler {
